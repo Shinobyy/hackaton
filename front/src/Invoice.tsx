@@ -11,15 +11,6 @@ interface Client {
 }
 
 function Invoice() {
-  const formatDate = (date: string) => {
-    if (!date) return "";
-    const parsedDate = new Date(date);
-    const year = parsedDate.getFullYear();
-    const month = (parsedDate.getMonth() + 1).toString().padStart(2, "0");
-    const day = parsedDate.getDate().toString().padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
-
   const [invoices, setInvoices] = useState([]);
 
   useEffect(() => {
@@ -28,9 +19,9 @@ function Invoice() {
         const response = await fetch("http://localhost:3000/");
         const data = await response.json();
 
-        const formattedData = data.map((invoice) => ({
+        const formattedData = data.map((invoice: any) => ({
           ...invoice,
-          date_envoi: format(new Date(invoice.date_envoi), "dd/MM/yyyy"), // Formater la date ici
+          date_envoi: format(new Date(invoice.date_envoi), "dd/MM/yyyy"),
         }));
 
         setInvoices(formattedData);
@@ -66,7 +57,7 @@ function Invoice() {
         <Modal />
       </div>
 
-      <TableList data={invoices} clients={clientNames} />
+      <TableList data={invoices} clients={clientNames} isClientForm={false} />
     </div>
   );
 }
