@@ -1,14 +1,15 @@
 import React from "react";
+import { Link } from "react-router";
 
 function Navbar() {
   return (
     <nav>
       <ul>
         <li>
-          <a href="/">Invoice</a>
+          <Link to={"/"}>Invoice</Link>
         </li>
         <li>
-          <a href="/clients">Clients</a>
+          <Link to={"/clients"}>Clients</Link>
         </li>
       </ul>
     </nav>

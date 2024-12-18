@@ -54,6 +54,7 @@ exports.updateInvoice = async (req, res) => {
   try {
     const { id } = req.params;
     const { client_id, date_envoi, status, montant } = req.body;
+    console.log(req.body);
 
     // Validation des champs requis
     if (!client_id || !date_envoi || !status || !montant) {
