@@ -16,7 +16,7 @@ exports.createUser = async (req, res) => {
   try {
     const { name, email, entreprise } = req.body;
 
-    const newClient = await db.one(
+    const newClient = await db.none(
       "INSERT INTO client (name, email, entreprise) VALUES ($1, $2, $3)",
       [name, email, entreprise]
     );
@@ -35,7 +35,7 @@ exports.updateUser = async (req, res) => {
     const { id } = req.params;
     const { name, email, entreprise } = req.body;
 
-    const updatedClient = await db.one(
+    const updatedClient = await db.none(
       "UPDATE client SET name = $1, email = $2, entreprise = $3 WHERE id = $4",
       [name, email, entreprise, id]
     );

@@ -12,19 +12,23 @@ import { Button } from "../ui/button";
 interface Client {
   id: number;
   name: string;
+  email: string;
+  entreprise: string;
+  total_factures: number;
+  montant_total: string;
 }
 
-interface EditModalProps {
-  invoice: Record<string, any> | null;
+interface ClientEditModalProps {
+  client: Client | null;
 }
 
-function EditModal({ invoice }: EditModalProps) {
-  const [clientNames, setClientNames] = useState<Client[]>([]);
+function ClientEditModal({ client }: ClientEditModalProps) {
   const [formData, setFormData] = useState({
-    client_id: "",
-    date_envoi: "",
-    status: "",
-    montant: "",
+    name: "",
+    email: "",
+    entreprise: "",
+    total_factures: 0,
+    montant_total: "",
   });
   const [message, setMessage] = useState<{
     text: string;
@@ -32,37 +36,22 @@ function EditModal({ invoice }: EditModalProps) {
   } | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch("http://localhost:3000/clients");
-        const data = await response.json();
-        setClientNames(data);
-      } catch (error) {
-        console.error("Error fetching clients:", error);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    if (invoice && Object.values(formData).every((value) => value === "")) {
+    if (client) {
       setFormData({
-        client_id: invoice.client_id || "",
-        date_envoi: invoice.date_envoi || "",
-        status: invoice.status || "",
-        montant: invoice.montant || "",
+        name: client.name,
+        email: client.email,
+        entreprise: client.entreprise,
+        total_factures: client.total_factures,
+        montant_total: client.montant_total,
       });
     }
-  }, [invoice, formData]);
+  }, [client]);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === "number" ? Number(value) : value,
     }));
   };
 
@@ -71,10 +60,11 @@ function EditModal({ invoice }: EditModalProps) {
     setMessage(null);
 
     if (
-      !formData.client_id ||
-      !formData.date_envoi ||
-      !formData.status ||
-      !formData.montant
+      !formData.name ||
+      !formData.email ||
+      !formData.entreprise ||
+      formData.total_factures < 0 ||
+      !formData.montant_total.trim()
     ) {
       setMessage({
         text: "Tous les champs doivent être remplis.",
@@ -84,33 +74,25 @@ function EditModal({ invoice }: EditModalProps) {
     }
 
     try {
-      const formattedData = {
-        ...formData,
-        date_envoi: formatDate(formData.date_envoi),
-      };
-
       const response = await fetch(
-        `http://localhost:3000/update/${invoice?.id}`,
+        `http://localhost:3000/clients/update/${client?.id}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(formattedData),
+          body: JSON.stringify(formData),
         }
       );
 
       const result = await response.json();
       if (response.ok) {
-        setMessage({
-          text: "Facture mise à jour avec succès",
-          type: "success",
-        });
+        setMessage({ text: "Client mis à jour avec succès", type: "success" });
       } else {
         setMessage({ text: `Erreur: ${result.message}`, type: "error" });
       }
     } catch (error) {
-      console.error("Erreur lors de la mise à jour de la facture:", error);
+      console.error("Erreur lors de la mise à jour du client:", error);
       setMessage({
         text: "Une erreur est survenue lors de la mise à jour.",
         type: "error",
@@ -118,31 +100,7 @@ function EditModal({ invoice }: EditModalProps) {
     }
   };
 
-  const formatDate = (date: string) => {
-    if (!date) return "";
-
-    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      return date;
-    }
-
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
-      const [day, month, year] = date.split("/");
-      return `${year}-${month}-${day}`;
-    }
-
-    try {
-      const parsedDate = new Date(date);
-      if (isNaN(parsedDate.getTime())) {
-        return "";
-      }
-      return parsedDate.toISOString().split("T")[0];
-    } catch (error) {
-      console.error("Erreur de parsing de la date:", error);
-      return "";
-    }
-  };
-
-  if (!invoice) {
+  if (!client) {
     return null;
   }
 
@@ -156,7 +114,7 @@ function EditModal({ invoice }: EditModalProps) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">
-            Modifier la facture
+            Modifier le client
           </DialogTitle>
           <DialogDescription>
             {message && (
@@ -171,46 +129,46 @@ function EditModal({ invoice }: EditModalProps) {
               </div>
             )}
             <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-              <select
-                name="client_id"
-                value={formData.client_id}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
-              >
-                <option value="" disabled>
-                  --Choisir un client--
-                </option>
-                {clientNames.map((client) => (
-                  <option key={client.id} value={client.id}>
-                    {client.name}
-                  </option>
-                ))}
-              </select>
               <input
-                placeholder="Date d'envoi"
-                type="date"
-                name="date_envoi"
-                value={formatDate(formData.date_envoi)}
+                placeholder="Nom du client"
+                type="text"
+                name="name"
+                value={formData.name}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
               />
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
-              >
-                <option value="Envoyée">Envoyée</option>
-                <option value="Payée">Payée</option>
-                <option value="Annulée">Annulée</option>
-              </select>
               <input
-                placeholder="Montant"
-                type="number"
-                name="montant"
-                value={formData.montant}
+                placeholder="Email du client"
+                type="email"
+                name="email"
+                value={formData.email}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              />
+              <input
+                placeholder="Entreprise du client"
+                type="text"
+                name="entreprise"
+                value={formData.entreprise}
+                onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              />
+              <input
+                placeholder="Total factures"
+                type="number"
+                name="total_factures"
+                value={formData.total_factures}
+                onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              />
+              <input
+                placeholder="Montant total"
+                type="number"
+                name="montant_total"
+                value={formData.montant_total}
+                onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                step="0.01"
               />
               <Button
                 type="submit"
@@ -226,4 +184,4 @@ function EditModal({ invoice }: EditModalProps) {
   );
 }
 
-export default EditModal;
+export default ClientEditModal;
