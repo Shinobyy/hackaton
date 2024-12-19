@@ -26,9 +26,12 @@ function EditModal({ invoice }: EditModalProps) {
     status: "",
     montant: "",
   });
+  const [message, setMessage] = useState<{
+    text: string;
+    type: "success" | "error";
+  } | null>(null);
 
   useEffect(() => {
-    // Fetching client names for the dropdown
     const fetchData = async () => {
       try {
         const response = await fetch("http://localhost:3000/clients");
@@ -42,7 +45,6 @@ function EditModal({ invoice }: EditModalProps) {
     fetchData();
   }, []);
 
-  // Only set form data when the invoice is available and formData is empty
   useEffect(() => {
     if (invoice && Object.values(formData).every((value) => value === "")) {
       setFormData({
@@ -66,6 +68,7 @@ function EditModal({ invoice }: EditModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMessage(null);
 
     if (
       !formData.client_id ||
@@ -73,11 +76,19 @@ function EditModal({ invoice }: EditModalProps) {
       !formData.status ||
       !formData.montant
     ) {
-      alert("Tous les champs doivent être remplis.");
+      setMessage({
+        text: "Tous les champs doivent être remplis.",
+        type: "error",
+      });
       return;
     }
 
     try {
+      const formattedData = {
+        ...formData,
+        date_envoi: formatDate(formData.date_envoi),
+      };
+
       const response = await fetch(
         `http://localhost:3000/update/${invoice?.id}`,
         {
@@ -85,29 +96,50 @@ function EditModal({ invoice }: EditModalProps) {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(formattedData),
         }
       );
 
       const result = await response.json();
       if (response.ok) {
-        alert("Facture mise à jour avec succès");
+        setMessage({
+          text: "Facture mise à jour avec succès",
+          type: "success",
+        });
       } else {
-        alert(`Erreur: ${result.message}`);
+        setMessage({ text: `Erreur: ${result.message}`, type: "error" });
       }
     } catch (error) {
       console.error("Erreur lors de la mise à jour de la facture:", error);
-      alert("Une erreur est survenue lors de la mise à jour.");
+      setMessage({
+        text: "Une erreur est survenue lors de la mise à jour.",
+        type: "error",
+      });
     }
   };
 
   const formatDate = (date: string) => {
     if (!date) return "";
-    const parsedDate = new Date(date);
-    const year = parsedDate.getFullYear();
-    const month = (parsedDate.getMonth() + 1).toString().padStart(2, "0");
-    const day = parsedDate.getDate().toString().padStart(2, "0");
-    return `${year}-${month}-${day}`;
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return date;
+    }
+
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
+      const [day, month, year] = date.split("/");
+      return `${year}-${month}-${day}`;
+    }
+
+    try {
+      const parsedDate = new Date(date);
+      if (isNaN(parsedDate.getTime())) {
+        return "";
+      }
+      return parsedDate.toISOString().split("T")[0];
+    } catch (error) {
+      console.error("Erreur de parsing de la date:", error);
+      return "";
+    }
   };
 
   if (!invoice) {
@@ -117,17 +149,33 @@ function EditModal({ invoice }: EditModalProps) {
   return (
     <Dialog>
       <DialogTrigger>
-        <Button>Modifier</Button>
+        <Button className="bg-yellow-500 text-white hover:bg-yellow-600 transition-colors">
+          Modifier
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Modifier la facture</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">
+            Modifier la facture
+          </DialogTitle>
           <DialogDescription>
-            <form onSubmit={handleSubmit} className="flex flex-col">
+            {message && (
+              <div
+                className={`p-3 rounded-md mb-4 ${
+                  message.type === "success"
+                    ? "bg-green-100 text-green-700 border border-green-200"
+                    : "bg-red-100 text-red-700 border border-red-200"
+                }`}
+              >
+                {message.text}
+              </div>
+            )}
+            <form onSubmit={handleSubmit} className="space-y-4 mt-4">
               <select
                 name="client_id"
                 value={formData.client_id}
                 onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
               >
                 <option value="" disabled>
                   --Choisir un client--
@@ -144,11 +192,13 @@ function EditModal({ invoice }: EditModalProps) {
                 name="date_envoi"
                 value={formatDate(formData.date_envoi)}
                 onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
               />
               <select
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
               >
                 <option value="Envoyée">Envoyée</option>
                 <option value="Payée">Payée</option>
@@ -160,8 +210,14 @@ function EditModal({ invoice }: EditModalProps) {
                 name="montant"
                 value={formData.montant}
                 onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
               />
-              <Button type="submit">Mettre à jour</Button>
+              <Button
+                type="submit"
+                className="w-full py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors"
+              >
+                Mettre à jour
+              </Button>
             </form>
           </DialogDescription>
         </DialogHeader>

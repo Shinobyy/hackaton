@@ -10,7 +10,7 @@ function Navbar() {
             to={"/"}
             className="hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors duration-300"
           >
-            Invoice
+            Factures
           </Link>
         </li>
         <li>

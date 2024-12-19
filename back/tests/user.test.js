@@ -3,12 +3,10 @@ const request = require("supertest");
 const userRoutes = require("../routes/userRoutes");
 const userController = require("../controllers/userController");
 
-// Créez l'application en dehors du describe
 const app = express();
-app.use(express.json()); // Middleware pour parser JSON
+app.use(express.json());
 app.use("/", userRoutes);
 
-// Mocquez les méthodes du contrôleur
 jest.mock("../controllers/userController");
 
 describe("Test user Routes", () => {

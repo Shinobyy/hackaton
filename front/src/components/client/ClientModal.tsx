@@ -15,28 +15,33 @@ function ClientModal() {
     email: "",
     entreprise: "",
     total_factures: 0,
-    montant_total: "",
+    montant_total: 0,
   });
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const [message, setMessage] = useState<{
+    text: string;
+    type: "success" | "error";
+  } | null>(null);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]:
+        name === "total_factures" || name === "montant_total"
+          ? Number(value)
+          : value,
     }));
   };
 
   const handleSubmit = async () => {
-    if (
-      !formData.name ||
-      !formData.email ||
-      !formData.entreprise ||
-      formData.total_factures === 0 ||
-      !formData.montant_total
-    ) {
-      alert("Tous les champs doivent être remplis.");
+    setMessage(null);
+
+    if (!formData.name || !formData.email || !formData.entreprise) {
+      setMessage({
+        text: "Tous les champs doivent être remplis.",
+        type: "error",
+      });
       return;
     }
 
@@ -51,33 +56,58 @@ function ClientModal() {
 
       const result = await response.json();
       if (response.ok) {
-        alert("Client créé avec succès");
-        // Vous pouvez fermer le modal ici si nécessaire
+        setMessage({ text: "Client créé avec succès", type: "success" });
+        setFormData({
+          name: "",
+          email: "",
+          entreprise: "",
+          total_factures: 0,
+          montant_total: 0,
+        });
       } else {
-        alert(`Erreur: ${result.message}`);
+        setMessage({ text: `Erreur: ${result.message}`, type: "error" });
       }
     } catch (error) {
       console.error("Erreur lors de la création du client:", error);
-      alert("Une erreur est survenue lors de la création.");
+      setMessage({
+        text: "Une erreur est survenue lors de la création.",
+        type: "error",
+      });
     }
   };
 
   return (
     <Dialog>
       <DialogTrigger>
-        <Button>Créer un client</Button>
+        <Button className="bg-blue-500 text-white hover:bg-blue-600 transition-colors">
+          Créer un client
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Créer un nouveau client</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">
+            Créer un nouveau client
+          </DialogTitle>
           <DialogDescription>
-            <div className="flex flex-col">
+            {message && (
+              <div
+                className={`p-3 rounded-md mb-4 ${
+                  message.type === "success"
+                    ? "bg-green-100 text-green-700 border border-green-200"
+                    : "bg-red-100 text-red-700 border border-red-200"
+                }`}
+              >
+                {message.text}
+              </div>
+            )}
+            <div className="space-y-4 mt-4">
               <input
                 placeholder="Nom du client"
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <input
                 placeholder="Email du client"
@@ -85,6 +115,7 @@ function ClientModal() {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <input
                 placeholder="Entreprise du client"
@@ -92,22 +123,14 @@ function ClientModal() {
                 name="entreprise"
                 value={formData.entreprise}
                 onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <input
-                placeholder="Total factures"
-                type="number"
-                name="total_factures"
-                value={formData.total_factures}
-                onChange={handleChange}
-              />
-              <input
-                placeholder="Montant total"
-                type="number"
-                name="montant_total"
-                value={formData.montant_total}
-                onChange={handleChange}
-              />
-              <Button onClick={handleSubmit}>Créer</Button>
+              <Button
+                onClick={handleSubmit}
+                className="w-full py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
+              >
+                Créer
+              </Button>
             </div>
           </DialogDescription>
         </DialogHeader>

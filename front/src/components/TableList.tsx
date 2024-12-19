@@ -11,13 +11,11 @@ import {
 import { Button } from "./ui/button";
 import EditModal from "./invoices/EditModal";
 import ClientEditModal from "./client/ClientEditModal";
-
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 
@@ -26,17 +24,16 @@ interface Client {
   name: string;
 }
 
-interface ClientData {
+interface Invoice {
   id: number;
-  name: string;
-  email: string;
-  entreprise: string;
-  total_factures: number;
-  montant_total: number;
+  client_id: number;
+  date_envoi: string;
+  status: string;
+  montant: string;
 }
 
 interface TableListProps {
-  data: Array<Record<string, any>>;
+  data: Array<Invoice | Client>;
   clients?: Client[];
   isClientForm: boolean;
 }
@@ -47,9 +44,15 @@ function TableList({ data, clients, isClientForm }: TableListProps) {
     string,
     any
   > | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  const formatHeader = (header: string) => {
+    return header
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  };
 
+  // Mise à jour du mapping des clients
   useEffect(() => {
     if (clients) {
       const map = clients.reduce((acc, client) => {
@@ -60,115 +63,131 @@ function TableList({ data, clients, isClientForm }: TableListProps) {
     }
   }, [clients]);
 
-  if (data.length === 0) {
-    return <p>No data available</p>;
-  }
-
   const headers = data.length > 0 ? Object.keys(data[0]) : [];
   headers.push("Actions");
 
-  const getClientName = (clientId: number) => {
-    return clientMap[clientId] || "Client non trouvé";
-  };
-
   const filteredData = data.filter((row) => {
-    return headers.some((header) => {
+    return headers.slice(0, -1).some((header) => {
+      if (header === "client_id" && row[header]) {
+        const clientName = clientMap[row[header]];
+        return (
+          clientName &&
+          clientName.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
       const cellValue = row[header]?.toString().toLowerCase();
       return cellValue?.includes(searchQuery.toLowerCase());
     });
   });
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+  const getClientName = (clientId: number) => {
+    return clientMap[clientId] || "Client non trouvé";
   };
 
+  const handleDelete = async (isClientForm: boolean, id: number) => {
+    try {
+      let url = "";
+
+      if (isClientForm) {
+        url = `http://localhost:3000/clients/delete/${id}`;
+      } else {
+        url = `http://localhost:3000/delete/${id}`;
+      }
+
+      const response = await fetch(url, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        if (isClientForm === false) {
+          alert("Facture supprimée avec succès");
+        } else {
+          alert("Client supprimé avec succès");
+        }
+      } else {
+        alert(`Erreur: ${result.message}`);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la suppression de la facture:", error);
+    }
+  };
+
+  if (filteredData.length === 0) {
+    return <p>No data available</p>;
+  }
   return (
     <div>
       <input
         type="text"
         placeholder="Rechercher..."
-        className="mb-4 p-2 border border-gray-300 rounded w-full focus:outline-blue-300"
         value={searchQuery}
-        onChange={handleSearchChange}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="mb-4 p-2 border w-full rounded-sm focus:outline-blue-400"
       />
-
-      <Table>
-        <TableCaption>Toutes les invoices</TableCaption>
-        <TableHeader>
-          <TableRow>
-            {headers.map((header, index) => (
-              <TableHead key={index}>{header}</TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredData.map((row, rowIndex) => (
-            <TableRow key={rowIndex}>
-              {headers.slice(0, -1).map((header, colIndex) => (
-                <TableCell key={colIndex}>
-                  {header === "client_id"
-                    ? getClientName(row.client_id)
-                    : row[header]}
-                </TableCell>
+      {filteredData.length === 0 ? (
+        <p>Aucune donnée ne correspond à votre recherche</p>
+      ) : (
+        <Table>
+          <TableCaption>
+            {isClientForm ? "Tous les clients" : "Toutes les invoices"}
+          </TableCaption>
+          <TableHeader>
+            <TableRow>
+              {headers.map((header, index) => (
+                <TableHead key={index}>{formatHeader(header)}</TableHead>
               ))}
-              <TableCell>
-                <div className="flex gap-5">
-                  {isClientForm ? (
-                    <ClientEditModal client={row as ClientData} />
-                  ) : (
-                    <EditModal invoice={row} />
-                  )}
-                  <Dialog>
-                    <DialogTrigger>
-                      <Button>Supprimer</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>Vous-êtes sûrs ?</DialogHeader>
-                      <DialogDescription>
-                        <Button
-                          onClick={() => handleDelete(isClientForm, row.id)}
-                        >
-                          Confirmer
-                        </Button>
-                      </DialogDescription>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {filteredData.map((row, rowIndex) => (
+              <TableRow key={rowIndex}>
+                {headers.slice(0, -1).map((header, colIndex) => (
+                  <TableCell key={colIndex}>
+                    {header === "client_id"
+                      ? getClientName(row.client_id)
+                      : row[header] || "-"}
+                  </TableCell>
+                ))}
+                <TableCell>
+                  <div className="flex gap-5">
+                    {isClientForm ? (
+                      <ClientEditModal client={row as ClientData} />
+                    ) : (
+                      <EditModal invoice={row} />
+                    )}
+                    <Dialog>
+                      <DialogTrigger>
+                        <Button className="bg-red-500 text-white hover:bg-red-600 transition-colors">
+                          Supprimer
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader className="text-xl font-semibold">
+                          Vous-êtes sûrs ?
+                        </DialogHeader>
+                        <DialogDescription>
+                          <Button
+                            onClick={() => handleDelete(isClientForm, row.id)}
+                            className="w-full py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+                          >
+                            Confirmer
+                          </Button>
+                        </DialogDescription>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 }
-
-const handleDelete = async (isClientForm: boolean, id: number) => {
-  try {
-    let url = "";
-
-    if (isClientForm) {
-      url = `http://localhost:3000/clients/delete/${id}`;
-    } else {
-      url = `http://localhost:3000/delete/${id}`;
-    }
-
-    const response = await fetch(url, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    const result = await response.json();
-    if (response.ok) {
-      // Optionnel : Logique après la suppression
-    } else {
-      alert(`Erreur: ${result.message}`);
-    }
-  } catch (error) {
-    console.error("Erreur lors de la suppression de la facture:", error);
-  }
-};
 
 export default TableList;

@@ -20,8 +20,12 @@ function Modal() {
     client_id: "",
     date_envoi: "",
     montant: "",
-    status: "",
+    status: "default",
   });
+  const [message, setMessage] = useState<{
+    text: string;
+    type: "success" | "error";
+  } | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,9 +41,7 @@ function Modal() {
     fetchData();
   }, []);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: any) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -48,8 +50,13 @@ function Modal() {
   };
 
   const handleSubmit = async () => {
+    setMessage(null);
+
     if (!formData.client_id || !formData.date_envoi || !formData.montant) {
-      alert("Tous les champs doivent être remplis.");
+      setMessage({
+        text: "Tous les champs doivent être remplis.",
+        type: "error",
+      });
       return;
     }
 
@@ -64,31 +71,49 @@ function Modal() {
 
       const result = await response.json();
       if (response.ok) {
-        alert("Facture créée avec succès");
-        // Ici vous pouvez fermer le modal si nécessaire
+        setMessage({ text: "Facture créée avec succès", type: "success" });
       } else {
-        alert(`Erreur: ${result.message}`);
+        setMessage({ text: `Erreur: ${result.message}`, type: "error" });
       }
     } catch (error) {
       console.error("Erreur lors de la création de la facture:", error);
-      alert("Une erreur est survenue lors de la création.");
+      setMessage({
+        text: "Une erreur est survenue lors de la création.",
+        type: "error",
+      });
     }
   };
 
   return (
     <Dialog>
       <DialogTrigger>
-        <Button>Créer une facture</Button>
+        <Button className="bg-blue-500 text-white hover:bg-blue-600 transition-colors">
+          Créer une facture
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Créer une nouvelle facture</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">
+            Créer une nouvelle facture
+          </DialogTitle>
           <DialogDescription>
-            <div className="flex flex-col">
+            {message && (
+              <div
+                className={`p-3 rounded-md mb-4 ${
+                  message.type === "success"
+                    ? "bg-green-100 text-green-700 border border-green-200"
+                    : "bg-red-100 text-red-700 border border-red-200"
+                }`}
+              >
+                {message.text}
+              </div>
+            )}
+            <div className="space-y-4 mt-4">
               <select
                 name="client_id"
                 value={formData.client_id}
                 onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="" disabled>
                   --Choisir un client--
@@ -99,30 +124,46 @@ function Modal() {
                   </option>
                 ))}
               </select>
+
               <input
                 placeholder="Date d'envoi"
                 type="date"
                 name="date_envoi"
                 value={formData.date_envoi}
                 onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+
               <input
                 placeholder="Montant"
                 type="number"
                 name="montant"
                 value={formData.montant}
                 onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+
               <select
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                defaultValue="default"
               >
+                <option value="default" disabled>
+                  --Choisir un status--
+                </option>
                 <option value="Envoyée">Envoyée</option>
                 <option value="Payée">Payée</option>
                 <option value="Annulée">Annulée</option>
               </select>
-              <Button onClick={handleSubmit}>Créer</Button>
+
+              <Button
+                onClick={handleSubmit}
+                className="w-full py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
+              >
+                Créer
+              </Button>
             </div>
           </DialogDescription>
         </DialogHeader>
