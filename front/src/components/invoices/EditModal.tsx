@@ -106,6 +106,7 @@ function EditModal({ invoice }: EditModalProps) {
           text: "Facture mise à jour avec succès",
           type: "success",
         });
+        window.location.reload();
       } else {
         setMessage({ text: `Erreur: ${result.message}`, type: "error" });
       }
@@ -121,10 +122,12 @@ function EditModal({ invoice }: EditModalProps) {
   const formatDate = (date: string) => {
     if (!date) return "";
 
+    // Si date est au format YYYY-MM-DD
     if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       return date;
     }
 
+    // Si date est au format DD/MM/YYYY
     if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
       const [day, month, year] = date.split("/");
       return `${year}-${month}-${day}`;

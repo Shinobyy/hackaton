@@ -64,6 +64,7 @@ function ClientModal() {
           total_factures: 0,
           montant_total: 0,
         });
+        window.location.reload();
       } else {
         setMessage({ text: `Erreur: ${result.message}`, type: "error" });
       }

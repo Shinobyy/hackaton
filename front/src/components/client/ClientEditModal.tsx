@@ -88,6 +88,7 @@ function ClientEditModal({ client }: ClientEditModalProps) {
       const result = await response.json();
       if (response.ok) {
         setMessage({ text: "Client mis à jour avec succès", type: "success" });
+        window.location.reload();
       } else {
         setMessage({ text: `Erreur: ${result.message}`, type: "error" });
       }
