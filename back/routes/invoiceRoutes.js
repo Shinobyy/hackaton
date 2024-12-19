@@ -3,9 +3,9 @@ const invoiceController = require("../controllers/invoiceController");
 
 const router = express.Router();
 
-router.get("/", invoiceController.getUsers);
-router.post("/add", invoiceController.createUser);
-router.put("/update/:id", invoiceController.updateUser);
-router.delete("/delete/:id", invoiceController.deleteUser);
+router.get("/", invoiceController.getInvoices);
+router.post("/add", invoiceController.createInvoice);
+router.put("/update/:id", invoiceController.updateInvoice);
+router.delete("/delete/:id", invoiceController.deleteInvoice);
 
 module.exports = router;

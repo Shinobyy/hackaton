@@ -1,13 +1,18 @@
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import { BrowserRouter, Route, Routes } from "react-router";
-import App from "./App";
+import Client from "./Client";
+import Invoice from "./Invoice";
+import Navbar from "./components/Navbar";
 
 createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
-    <Routes>
-      <Route path="/" element={<App />} />
-      <Route path="/clients" element={<App />} />
-    </Routes>
+    <Navbar />
+    <div className="mx-72">
+      <Routes>
+        <Route path="/" element={<Invoice />} />
+        <Route path="/clients" element={<Client />} />
+      </Routes>
+    </div>
   </BrowserRouter>
 );
