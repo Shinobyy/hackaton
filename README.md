@@ -33,7 +33,3 @@ cd back && npm run dev
 
 Création d'un service PostgreSQL sur DBngine du nom de hackaton.
 Laisser la config de base (port, username, pwd);
-
-# Erreurs
-
-Créer facture : le select de base n'est pas correctement mappé => Devrait etre --Aucun--
