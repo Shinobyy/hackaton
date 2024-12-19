@@ -8,6 +8,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "../ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { Input } from "../ui/input";
 
 interface Client {
   id: number;
@@ -72,6 +80,7 @@ function Modal() {
       const result = await response.json();
       if (response.ok) {
         setMessage({ text: "Facture créée avec succès", type: "success" });
+        window.location.reload();
       } else {
         setMessage({ text: `Erreur: ${result.message}`, type: "error" });
       }
@@ -109,32 +118,36 @@ function Modal() {
               </div>
             )}
             <div className="space-y-4 mt-4">
-              <select
+              <Select
                 name="client_id"
-                value={formData.client_id}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={formData.client_id.toString()}
+                onValueChange={(value) =>
+                  handleChange({
+                    target: { name: "client_id", value },
+                  } as React.ChangeEvent<HTMLSelectElement>)
+                }
               >
-                <option value="" disabled>
-                  --Choisir un client--
-                </option>
-                {clientNames.map((client: Client) => (
-                  <option key={client.id} value={client.id}>
-                    {client.name}
-                  </option>
-                ))}
-              </select>
-
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Choisir un client" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clientNames.map((client: Client) => (
+                    <SelectItem key={client.id} value={client.id.toString()}>
+                      {client.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <input
                 placeholder="Date d'envoi"
                 type="date"
                 name="date_envoi"
                 value={formData.date_envoi}
                 onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
               />
 
-              <input
+              <Input
                 placeholder="Montant"
                 type="number"
                 name="montant"
@@ -143,20 +156,25 @@ function Modal() {
                 className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
 
-              <select
-                name="status"
+              <Select
+                name="client_id"
                 value={formData.status}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onValueChange={(value) => {
+                  handleChange({
+                    target: { name: "status", value },
+                  } as React.ChangeEvent<HTMLSelectElement>);
+                }}
                 defaultValue="default"
               >
-                <option value="default" disabled>
-                  --Choisir un status--
-                </option>
-                <option value="Envoyée">Envoyée</option>
-                <option value="Payée">Payée</option>
-                <option value="Annulée">Annulée</option>
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="--Choisir un status--" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Envoyée">Envoyée</SelectItem>
+                  <SelectItem value="Payée">Payée</SelectItem>
+                  <SelectItem value="Annulée">Annulée</SelectItem>
+                </SelectContent>
+              </Select>
 
               <Button
                 onClick={handleSubmit}
